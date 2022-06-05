@@ -68,7 +68,7 @@ fun MainContent(modifier: Modifier, mainViewModel: MainViewModel = viewModel()) 
     val context = LocalContext.current
     Permission(
         permission = Manifest.permission.CAMERA,
-        rationale = "You said you wanted a picture, so I'm going to have to ask for permission",
+        rationale = "App need camera permission to process real time color picking function",
         permissionNotAvailableContent = {
             Column(modifier) {
                 Text("O noes! No Camera!")
@@ -91,51 +91,17 @@ fun MainContent(modifier: Modifier, mainViewModel: MainViewModel = viewModel()) 
             Box(modifier = Modifier.align(Alignment.Center)) {
                 Ring(color = if (currentColorState.isLight) Color.Black else Color.White)
             }
-            Result(
+
+            ColorResult(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .height(100.dp),
-                colorState = currentColorState
+                colorState = currentColorState,
+                onUriResult = {
+                    OpenImageActivity.startActivity(context, it)
+                }
             )
-        }
-    }
-}
-
-@Composable
-fun Result(
-    modifier: Modifier,
-    colorState: ColorState
-) {
-
-    val context = LocalContext.current
-
-    val launcher = rememberLauncherForActivityResult(contract =
-    ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            OpenImageActivity.startActivity(context, it)
-        }
-    }
-
-    Box(modifier = modifier
-        .background(colorState.toColor())
-        .statusBarsPadding()) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = colorState.toHexString(),
-                color = if (colorState.isLight) Color.Black else Color.White,
-                modifier = Modifier.padding(start = 12.dp)
-            )
-
-            IconButton(onClick = {
-                launcher.launch("image/*")
-            }) {
-                Icon(imageVector = Icons.Default.Image, contentDescription = "Choose an image")
-            }
         }
     }
 }

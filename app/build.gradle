@@ -10,21 +10,43 @@ android {
         applicationId "com.linversion.simplecolorpicker"
         minSdk 23
         targetSdk 31
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
         }
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
     }
 
-    buildTypes {
+    signingConfigs {
         release {
+            keyAlias 'simple-color-picker'
+            keyPassword '11118888'
+            storeFile file('./keystore/sign.jks')
+            storePassword '11118888'
+        }
+    }
+
+
+    buildTypes {
+        debug {
             minifyEnabled false
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+
+        release {
+            minifyEnabled true
+            zipAlignEnabled true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8

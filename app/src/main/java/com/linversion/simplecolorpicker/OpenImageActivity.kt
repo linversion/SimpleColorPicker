@@ -13,10 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -24,19 +21,18 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.linversion.simplecolorpicker.picker.ColorEnvelope
+import com.linversion.simplecolorpicker.picker.ColorPickerController
+import com.linversion.simplecolorpicker.picker.ImageColorPicker
+import com.linversion.simplecolorpicker.picker.rememberColorPickerController
 import com.linversion.simplecolorpicker.ui.theme.SimpleColorPickerTheme
-import com.linversion.simplecolorpicker.ui.widget.Ring
 
 /**
  * @author linversion
@@ -77,7 +73,6 @@ fun MainContent(
     viewModel: OpenImageViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     uri: Uri?
 ) {
-    viewModel.updateUri(uri)
 
     val systemUiController = rememberSystemUiController()
     val useDarkIcons = MaterialTheme.colors.isLight
@@ -87,107 +82,61 @@ fun MainContent(
             darkIcons = useDarkIcons
         )
     }
+    val controller = rememberColorPickerController()
+    val colorState = viewModel.colorState.collectAsState().value
+    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ImagePreview(viewModel = viewModel)
-        ImageResult(
+        ImagePreview(viewModel = viewModel, controller, uri)
+        ColorResult(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .height(100.dp), viewModel
-        )
+                .height(100.dp),
+            colorState = colorState
+        ) {
+            val bitmap: Bitmap? = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
+            } else {
+                val source = ImageDecoder.createSource(context.contentResolver, it)
+                ImageDecoder.decodeBitmap(source)
+            }
+            bitmap?.let {
+                controller.setPaletteImageBitmap(bitmap)
+            }
+        }
     }
 }
 
 @Composable
-fun ImagePreview(viewModel: OpenImageViewModel) {
+fun ImagePreview(viewModel: OpenImageViewModel, controller: ColorPickerController, firstUri: Uri?) {
     val context = LocalContext.current
-    val targetUri = viewModel.uriState.collectAsState().value
-    val bitmap = remember {
-        mutableStateOf<Bitmap?>(null)
-    }
-    var scale by remember { mutableStateOf(1f) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
-    val state = rememberTransformableState { zoomChange, offsetChange, _ ->
-        val calScale = scale * zoomChange
-        Log.d("test", "ImagePreview: $calScale")
-        scale = if (calScale < 1f) 1f else calScale
-        offset += offsetChange
-    }
 
+    Log.d("test", "ImagePreview: ")
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.DarkGray)
     ) {
-        targetUri?.let { uri ->
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                bitmap.value = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+
+        firstUri?.let { uri ->
+            val bitmap: Bitmap? = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
             } else {
                 val source = ImageDecoder.createSource(context.contentResolver, uri)
-                bitmap.value = ImageDecoder.decodeBitmap(source)
+                ImageDecoder.decodeBitmap(source)
             }
 
-            bitmap.value?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = "Current image",
+            bitmap?.let {
+                ImageColorPicker(
                     modifier = Modifier
-                        .align(Alignment.Center)
-                        .graphicsLayer {
-                            translationX = offset.x
-                            translationY = offset.y
-                            scaleX = scale
-                            scaleY = scale
-                        }
-                        .transformable(state),
-                    contentScale = ContentScale.Fit
+                        .fillMaxSize(),
+                    controller = controller,
+                    bitmap = it,
+                    onColorChanged = { colorEnvelope: ColorEnvelope ->
+                        viewModel.updateColor(colorEnvelope)
+                    }
                 )
-            }
-        }
-        Box(modifier = Modifier.align(Alignment.Center)) {
-            val currentColorState = viewModel.colorState.collectAsState().value
-            Ring(color = if (currentColorState.isLight) Color.Black else Color.White)
-        }
-    }
-}
-
-@Composable
-fun ImageResult(
-    modifier: Modifier,
-    viewModel: OpenImageViewModel
-) {
-    val launcher = rememberLauncherForActivityResult(
-        contract =
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            viewModel.updateUri(uri)
-        }
-    }
-
-    val colorState = viewModel.colorState.collectAsState().value
-
-    Box(
-        modifier = modifier
-            .background(colorState.toColor())
-            .statusBarsPadding()
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = colorState.toHexString(),
-                color = if (colorState.isLight) Color.Black else Color.White,
-                modifier = Modifier.padding(start = 12.dp)
-            )
-
-            IconButton(onClick = {
-                launcher.launch("image/*")
-            }) {
-                Icon(imageVector = Icons.Default.Image, contentDescription = "Choose an image")
             }
         }
     }

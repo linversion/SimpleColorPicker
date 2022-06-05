@@ -1,8 +1,10 @@
 package com.linversion.simplecolorpicker
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linversion.simplecolorpicker.picker.ColorEnvelope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -20,9 +22,15 @@ class OpenImageViewModel : ViewModel() {
 
     fun updateUri(uri: Uri?) {
         viewModelScope.launch {
+            Log.d("test", "updateUri: ")
             _uriState.emit(uri)
         }
     }
 
-//    fun updateColor()
+    fun updateColor(colorEnvelope: ColorEnvelope) {
+        viewModelScope.launch {
+            val color = ColorState(0, 0, 0, 0, colorEnvelope.isLight, colorEnvelope = colorEnvelope)
+            _colorState.emit(color)
+        }
+    }
 }

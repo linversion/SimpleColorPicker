@@ -3,6 +3,7 @@ package com.linversion.simplecolorpicker
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linversion.simplecolorpicker.picker.ColorEnvelope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -28,7 +29,8 @@ data class ColorState(
     val green: Int,
     val blue: Int,
     val alpha: Int,
-    val isLight: Boolean
+    val isLight: Boolean,
+    val colorEnvelope: ColorEnvelope? = null
 )
 
 fun ColorState.toColor(): Color = Color(this.red, this.green, this.blue)
