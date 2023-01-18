@@ -40,6 +40,7 @@ android {
         }
 
         release {
+            versionNameSuffix "-release"
             minifyEnabled true
             zipAlignEnabled true
             signingConfig signingConfigs.release
@@ -47,6 +48,22 @@ android {
         }
     }
 
+    // Specifies one flavor dimension.
+    flavorDimensions "version"
+    productFlavors {
+        dev {
+            dimension = "version"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            buildConfigField "String", "cameraBannerAdId", "\"ca-app-pub-3940256099942544/6300978111\""
+        }
+        product {
+            dimension = "version"
+            applicationIdSuffix = ".product"
+            versionNameSuffix = "-product"
+            buildConfigField "String", "cameraBannerAdId", "\"ca-app-pub-5013976831722488/4005418299\""
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8

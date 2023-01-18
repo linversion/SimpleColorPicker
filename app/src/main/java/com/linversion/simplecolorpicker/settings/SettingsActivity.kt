@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -98,7 +96,15 @@ fun SettingsContent(onClickBack: () -> Unit) {
                             tint = Color.Gray
                         )
 
-                        Text(text = "Privacy Policy", color = Color.Gray)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "Privacy Policy", color = Color.Gray)
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Icon(
+                                imageVector = Icons.Filled.NavigateNext,
+                                contentDescription = "Privacy Policy",
+                                tint = Color.Gray
+                            )
+                        }
                     }
                 }
 
