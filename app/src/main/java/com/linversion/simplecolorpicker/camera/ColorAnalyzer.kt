@@ -1,5 +1,6 @@
 package com.linversion.simplecolorpicker.camera
 
+import android.os.SystemClock
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -19,12 +20,23 @@ class ColorAnalyzer(private val listener: (alpha: Int, red: Int, green: Int, blu
     private var yArr: ByteArray? = null
     private var uArr: ByteArray? = null
     private var vArr: ByteArray? = null
+    private var lastAnalyzeTime = 0L
+    private val analyzeInterval = 3000
 
     override fun analyze(image: ImageProxy) {
         //mi6 1920*1080
         // format YUV_420_888
         // rowStride=640,
         // pixelStride=1
+        val now = SystemClock.uptimeMillis()
+        if (lastAnalyzeTime == 0L) {
+            lastAnalyzeTime = now
+        }
+        if (now - lastAnalyzeTime < analyzeInterval) {
+            image.close()
+            return
+        }
+
         val width = image.width
         val height = image.height
 //        Log.d(
@@ -70,12 +82,9 @@ class ColorAnalyzer(private val listener: (alpha: Int, red: Int, green: Int, blu
         val r = (y + (1.370705 * v)).toInt()
         val g = (y - (0.698001 * v) - (0.337633 * u)).toInt()
         val b = (y + (1.732446 * u)).toInt()
-//        Log.d(TAG, "analyze: rgb($r,$g,$b)")
 
         listener.invoke(255, r, g, b, y >= 192)
-        CoroutineScope(Dispatchers.IO).launch {
-            delay(250)
-            image.close()
-        }
+        lastAnalyzeTime = now
+        image.close()
     }
 }
