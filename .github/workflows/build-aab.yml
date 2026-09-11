@@ -1,0 +1,50 @@
+name: Build AAB
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build productRelease AAB
+        run: ./gradlew :app:bundleProductRelease --no-daemon --stacktrace
+
+      - name: Rename AAB
+        run: |
+          mkdir -p dist
+          AAB=$(ls app/build/outputs/bundle/productRelease/*.aab | head -n 1)
+          cp "$AAB" "dist/SimpleColorPicker-${GITHUB_REF_NAME}.aab"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SimpleColorPicker-${{ github.ref_name }}
+          path: dist/*.aab
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.aab
+          generate_release_notes: true
