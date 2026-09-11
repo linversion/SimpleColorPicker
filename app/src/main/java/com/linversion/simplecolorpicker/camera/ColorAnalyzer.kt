@@ -1,29 +1,16 @@
 package com.linversion.simplecolorpicker.camera
 
 import android.os.SystemClock
-import android.view.View
-import androidx.annotation.OptIn
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import androidx.camera.view.PreviewView
-import androidx.camera.view.TransformExperimental
-import androidx.camera.view.transform.CoordinateTransform
-import androidx.camera.view.transform.ImageProxyTransformFactory
-import java.lang.ref.WeakReference
 
 /**
- * RGBA 圆形孔径中值取样。准星从 PreviewView 映射到 analysis buffer。
+ * RGBA 圆形孔径中值取样。取景为居中裁剪，准星即分析缓冲区中心。
  */
 class ColorAnalyzer(
-    previewView: PreviewView,
     private val listener: (red: Int, green: Int, blue: Int) -> Unit
 ) : ImageAnalysis.Analyzer {
 
-    private val previewRef = WeakReference(previewView)
-    private val transformFactory = ImageProxyTransformFactory().apply {
-        isUsingCropRect = true
-        isUsingRotationDegrees = true
-    }
     private var lastAnalyzeTime = 0L
     private val analyzeIntervalMs = 50L
     private val radiusPx = 8
@@ -31,7 +18,6 @@ class ColorAnalyzer(
     private val gs = IntArray(rs.size)
     private val bs = IntArray(rs.size)
 
-    @OptIn(TransformExperimental::class)
     override fun analyze(image: ImageProxy) {
         val now = SystemClock.uptimeMillis()
         if (lastAnalyzeTime != 0L && now - lastAnalyzeTime < analyzeIntervalMs) {
@@ -40,33 +26,11 @@ class ColorAnalyzer(
         }
         lastAnalyzeTime = now
 
-        val preview = previewRef.get()
-        if (preview == null || preview.width == 0 || preview.height == 0) {
-            image.close()
-            return
-        }
-
-        val (cx, cy) = mapPreviewCenter(preview, image)
-        val color = sampleMedian(image, cx, cy)
+        val color = sampleMedian(image, image.width / 2, image.height / 2)
         if (color != null) {
             listener(color[0], color[1], color[2])
         }
         image.close()
-    }
-
-    @OptIn(TransformExperimental::class)
-    private fun mapPreviewCenter(preview: PreviewView, image: ImageProxy): Pair<Int, Int> {
-        val source = preview.outputTransform ?: return image.width / 2 to image.height / 2
-        return try {
-            val target = transformFactory.getOutputTransform(image)
-            val transform = CoordinateTransform(source, target)
-            val pts = floatArrayOf(preview.width / 2f, preview.height / 2f)
-            transform.mapPoints(pts)
-            pts[0].toInt().coerceIn(0, image.width - 1) to
-                pts[1].toInt().coerceIn(0, image.height - 1)
-        } catch (_: Exception) {
-            image.width / 2 to image.height / 2
-        }
     }
 
     private fun sampleMedian(image: ImageProxy, cx: Int, cy: Int): IntArray? {
