@@ -9,19 +9,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,26 +24,6 @@ import com.linversion.simplecolorpicker.picker.PaletteSwatch
 @Composable
 fun PaletteSheetContent(swatches: List<PaletteSwatch>) {
     val context = LocalContext.current
-    val listState = rememberLazyListState()
-
-    // M2 ModalBottomSheet 的嵌套滚动协调是「sheet 优先」：向上拖时它外层的
-    // ConsumeSwipeWithinBottomSheetBoundsNestedScrollConnection 会先把位移喂给
-    // sheet 的 AnchoredDraggable，sheet 未完全展开时（半屏态、show 动画中、
-    // 色板异步到达导致锚点变化）列表会滚不动或与 sheet 同时移动。
-    // 在 pre-scroll 阶段把列表自己能消费的位移直接滚掉并消费，让列表优先；
-    // 列表滚到底后的剩余量仍交给 sheet。
-    val listFirstScroll = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                if (source == NestedScrollSource.UserInput && delta < 0f && listState.canScrollForward) {
-                    return Offset(0f, listState.dispatchRawDelta(delta))
-                }
-                return Offset.Zero
-            }
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -71,11 +45,8 @@ fun PaletteSheetContent(swatches: List<PaletteSwatch>) {
             Text(text = "暂无主色", color = Color.Gray, fontSize = 14.sp)
         } else {
             LazyColumn(
-                state = listState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .heightIn(max = 360.dp)
-                    .nestedScroll(listFirstScroll)
+                modifier = Modifier.heightIn(max = 360.dp)
             ) {
                 items(swatches) { swatch ->
                     PaletteRow(swatch) {
