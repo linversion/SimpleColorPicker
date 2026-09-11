@@ -7,16 +7,14 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionRequired
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.linversion.simplecolorpicker.OpenImageActivity
 
-/**
- * @author linversion
- * on 2022/5/14
- */
 @ExperimentalPermissionsApi
 @Composable
 fun Permission(
@@ -28,29 +26,27 @@ fun Permission(
     val context = LocalContext.current
     val permissionState = rememberPermissionState(permission)
     val launcher = rememberLauncherForActivityResult(
-        contract =
-        ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let {
-            OpenImageActivity.startActivity(context, it)
-        }
+        uri?.let { OpenImageActivity.startActivity(context, it) }
     }
 
-    PermissionRequired(
-        permissionState = permissionState,
-        permissionNotGrantedContent = {
-            Rationale(text = rationale,
-                onRequestPermission = {
-                    permissionState.launchPermissionRequest()
-                },
-                onSelectImage = {
-                    launcher.launch("image/*")
-                }
+    when {
+        permissionState.status.isGranted -> content()
+        permissionState.status.shouldShowRationale -> {
+            Rationale(
+                text = rationale,
+                onRequestPermission = { permissionState.launchPermissionRequest() },
+                onSelectImage = { launcher.launch("image/*") }
             )
-        },
-        permissionNotAvailableContent = permissionNotAvailableContent,
-        content = content
-    )
+        }
+        else -> {
+            LaunchedEffect(Unit) {
+                permissionState.launchPermissionRequest()
+            }
+            permissionNotAvailableContent()
+        }
+    }
 }
 
 @Composable
@@ -61,21 +57,13 @@ private fun Rationale(
 ) {
     AlertDialog(
         onDismissRequest = {},
-        title = {
-            Text(text = "Permission request")
-        },
-        text = {
-            Text(text)
-        },
+        title = { Text(text = "Permission request") },
+        text = { Text(text) },
         confirmButton = {
-            Button(onClick = onRequestPermission) {
-                Text("Grant")
-            }
+            Button(onClick = onRequestPermission) { Text("Grant") }
         },
         dismissButton = {
-            Button(onClick = onSelectImage) {
-                Text(text = "Select Image")
-            }
+            Button(onClick = onSelectImage) { Text(text = "Select Image") }
         }
     )
 }

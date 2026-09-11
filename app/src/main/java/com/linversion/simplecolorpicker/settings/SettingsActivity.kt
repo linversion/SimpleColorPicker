@@ -5,12 +5,16 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,16 +24,12 @@ import androidx.compose.ui.unit.dp
 import com.linversion.simplecolorpicker.BuildConfig
 import com.linversion.simplecolorpicker.ui.theme.SimpleColorPickerTheme
 
-/**
- * @author linversion
- * on 2022/6/5
- */
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             SimpleColorPickerTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
                     SettingsContent() {
                         finish()
@@ -40,7 +40,6 @@ class SettingsActivity : ComponentActivity() {
     }
 
     companion object {
-
         fun startActivity(context: Context) {
             Intent(context, SettingsActivity::class.java).let {
                 context.startActivity(it)
@@ -55,25 +54,25 @@ fun SettingsContent(onClickBack: () -> Unit) {
 
     Scaffold(
         scaffoldState = scaffoldState,
+        modifier = Modifier.systemBarsPadding(),
         topBar = {
             TopAppBar(
                 title = { Text(text = "Settings") },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        onClickBack.invoke()
-                    }) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = { onClickBack.invoke() }) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         }
-    ) {
+    ) { innerPadding ->
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
             val uriHandler = LocalUriHandler.current
-
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -95,19 +94,17 @@ fun SettingsContent(onClickBack: () -> Unit) {
                             contentDescription = "Privacy Policy",
                             tint = Color.Gray
                         )
-
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = "Privacy Policy", color = Color.Gray)
                             Spacer(modifier = Modifier.width(2.dp))
                             Icon(
-                                imageVector = Icons.Filled.NavigateNext,
+                                imageVector = Icons.AutoMirrored.Filled.NavigateNext,
                                 contentDescription = "Privacy Policy",
                                 tint = Color.Gray
                             )
                         }
                     }
                 }
-
                 item {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -122,7 +119,6 @@ fun SettingsContent(onClickBack: () -> Unit) {
                             contentDescription = "Version Name",
                             tint = Color.Gray
                         )
-
                         Text(text = "v${BuildConfig.VERSION_NAME}", color = Color.Gray)
                     }
                 }

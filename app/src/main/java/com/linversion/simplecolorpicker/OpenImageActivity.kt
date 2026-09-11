@@ -10,51 +10,57 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.runtime.*
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.statusBarsPadding
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linversion.simplecolorpicker.picker.ColorEnvelope
 import com.linversion.simplecolorpicker.picker.ColorPickerController
 import com.linversion.simplecolorpicker.picker.ImageColorPicker
 import com.linversion.simplecolorpicker.picker.rememberColorPickerController
 import com.linversion.simplecolorpicker.ui.theme.SimpleColorPickerTheme
 
-/**
- * @author linversion
- * on 2022/5/16
- */
+private fun Intent.parcelableUri(key: String): Uri? {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        getParcelableExtra(key, Uri::class.java)
+    } else {
+        @Suppress("DEPRECATION")
+        getParcelableExtra(key)
+    }
+}
+
+private fun Uri.toBitmap(context: Context): Bitmap? {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        val source = ImageDecoder.createSource(context.contentResolver, this)
+        ImageDecoder.decodeBitmap(source)
+    } else {
+        @Suppress("DEPRECATION")
+        MediaStore.Images.Media.getBitmap(context.contentResolver, this)
+    }
+}
+
 class OpenImageActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        val firstUri = intent.getParcelableExtra<Uri>(key_uri)
+        val firstUri = intent.parcelableUri(key_uri)
 
         setContent {
-            ProvideWindowInsets {
-                SimpleColorPickerTheme {
-                    // A surface container using the 'background' color from the theme
-                    Surface(color = MaterialTheme.colors.background) {
-                        MainContent(uri = firstUri)
-                    }
+            SimpleColorPickerTheme {
+                Surface(color = MaterialTheme.colors.background) {
+                    MainContent(uri = firstUri)
                 }
             }
         }
-        //Hide the status bar
-        WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 
     companion object {
@@ -73,15 +79,6 @@ fun MainContent(
     viewModel: OpenImageViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     uri: Uri?
 ) {
-
-    val systemUiController = rememberSystemUiController()
-    val useDarkIcons = MaterialTheme.colors.isLight
-    SideEffect {
-        systemUiController.setSystemBarsColor(
-            color = Color.Transparent,
-            darkIcons = useDarkIcons
-        )
-    }
     val controller = rememberColorPickerController()
     val colorState = viewModel.colorState.collectAsState().value
     val context = LocalContext.current
@@ -95,13 +92,7 @@ fun MainContent(
                 .height(100.dp),
             colorState = colorState
         ) {
-            val bitmap: Bitmap? = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-            } else {
-                val source = ImageDecoder.createSource(context.contentResolver, it)
-                ImageDecoder.decodeBitmap(source)
-            }
-            bitmap?.let {
+            it.toBitmap(context)?.let { bitmap ->
                 controller.setPaletteImageBitmap(bitmap)
             }
         }
@@ -111,26 +102,16 @@ fun MainContent(
 @Composable
 fun ImagePreview(viewModel: OpenImageViewModel, controller: ColorPickerController, firstUri: Uri?) {
     val context = LocalContext.current
-
     Log.d("test", "ImagePreview: ")
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.DarkGray)
     ) {
-
         firstUri?.let { uri ->
-            val bitmap: Bitmap? = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-            } else {
-                val source = ImageDecoder.createSource(context.contentResolver, uri)
-                ImageDecoder.decodeBitmap(source)
-            }
-
-            bitmap?.let {
+            uri.toBitmap(context)?.let {
                 ImageColorPicker(
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     controller = controller,
                     bitmap = it,
                     onColorChanged = { colorEnvelope: ColorEnvelope ->
