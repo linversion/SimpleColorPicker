@@ -2,25 +2,33 @@ package com.linversion.simplecolorpicker
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.linversion.simplecolorpicker.picker.ColorEnvelope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
-/**
- * @author linversion
- * on 2022/5/15
- */
 class MainViewModel : ViewModel() {
     private var _state = MutableStateFlow(ColorState(0, 0, 0, 0, false))
     val colorState: StateFlow<ColorState> = _state
 
+    private var emaR = -1f
+    private var emaG = -1f
+    private var emaB = -1f
+    private val smooth = 0.25f
+
     fun updateColor(alpha: Int, red: Int, green: Int, blue: Int, isLight: Boolean) {
-        viewModelScope.launch {
-            val color = ColorState(red, green, blue, alpha, isLight)
-            _state.emit(color)
+        if (emaR < 0f) {
+            emaR = red.toFloat()
+            emaG = green.toFloat()
+            emaB = blue.toFloat()
+        } else {
+            emaR += (red - emaR) * smooth
+            emaG += (green - emaG) * smooth
+            emaB += (blue - emaB) * smooth
         }
+        val r = emaR.toInt().coerceIn(0, 255)
+        val g = emaG.toInt().coerceIn(0, 255)
+        val b = emaB.toInt().coerceIn(0, 255)
+        _state.value = ColorState(r, g, b, alpha, isLight)
     }
 }
 
@@ -33,6 +41,6 @@ data class ColorState(
     val colorEnvelope: ColorEnvelope? = null
 )
 
-fun ColorState.toColor(): Color = Color(this.red, this.green, this.blue)
+fun ColorState.toColor(): Color = Color(red, green, blue)
 fun ColorState.toHexString(): String =
-    "#${this.red.toString(16)}${this.green.toString(16)}${this.blue.toString(16)}"
+    "#%02X%02X%02X".format(red.coerceIn(0, 255), green.coerceIn(0, 255), blue.coerceIn(0, 255))
