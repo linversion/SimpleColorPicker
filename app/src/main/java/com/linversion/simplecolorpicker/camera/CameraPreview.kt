@@ -1,16 +1,12 @@
 package com.linversion.simplecolorpicker.camera
 
-import android.hardware.camera2.CaptureRequest
 import android.util.Log
 import android.util.Size
 import android.view.ViewGroup
-import androidx.annotation.OptIn
-import androidx.camera.camera2.interop.Camera2CameraControl
-import androidx.camera.camera2.interop.CaptureRequestOptions
-import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888
 import androidx.camera.core.ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.ResolutionSelector
@@ -25,7 +21,6 @@ import com.linversion.simplecolorpicker.MainViewModel
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
-@OptIn(ExperimentalCamera2Interop::class)
 @Composable
 fun CameraPreview(
     modifier: Modifier,
@@ -61,13 +56,14 @@ fun CameraPreview(
 
             val imageAnalyzer = ImageAnalysis.Builder()
                 .setBackpressureStrategy(STRATEGY_KEEP_ONLY_LATEST)
+                .setOutputImageFormat(OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .setResolutionSelector(analysisSelector)
                 .build()
                 .also {
                     it.setAnalyzer(
                         context.executor,
-                        ColorAnalyzer { alpha, red, green, blue, isLight ->
-                            viewModel.updateColor(alpha, red, green, blue, isLight)
+                        ColorAnalyzer(previewView) { red, green, blue ->
+                            viewModel.onSample(red, green, blue)
                         }
                     )
                 }
@@ -82,7 +78,7 @@ fun CameraPreview(
                         previewUseCase,
                         imageAnalyzer
                     )
-
+                    // 对准星测光对焦，但不锁死 AE/AWB
                     previewView.post {
                         if (previewView.width == 0 || previewView.height == 0) return@post
                         val point = previewView.meteringPointFactory.createPoint(
@@ -94,16 +90,9 @@ fun CameraPreview(
                             FocusMeteringAction.FLAG_AF or
                                 FocusMeteringAction.FLAG_AE or
                                 FocusMeteringAction.FLAG_AWB
-                        ).setAutoCancelDuration(3, TimeUnit.SECONDS).build()
+                        ).setAutoCancelDuration(4, TimeUnit.SECONDS).build()
                         camera.cameraControl.startFocusAndMetering(action)
                     }
-
-                    val camera2Control = Camera2CameraControl.from(camera.cameraControl)
-                    val options = CaptureRequestOptions.Builder()
-                        .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_LOCK, true)
-                        .setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, true)
-                        .build()
-                    camera2Control.setCaptureRequestOptions(options)
                 } catch (e: Exception) {
                     Log.e("CameraView", "Use case binding failed", e)
                 }

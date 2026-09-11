@@ -2,33 +2,53 @@ package com.linversion.simplecolorpicker
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
+import com.linversion.simplecolorpicker.camera.ColorScience
 import com.linversion.simplecolorpicker.picker.ColorEnvelope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class MainViewModel : ViewModel() {
-    private var _state = MutableStateFlow(ColorState(0, 0, 0, 0, false))
+    private val _state = MutableStateFlow(ColorState(0, 0, 0, 255, false))
     val colorState: StateFlow<ColorState> = _state
 
-    private var emaR = -1f
-    private var emaG = -1f
-    private var emaB = -1f
-    private val smooth = 0.25f
+    private var ema: ColorScience.Lab? = null
+    private var published: ColorScience.Lab? = null
+    private val smooth = 0.28f
+    private val holdDeltaE = 1.6f
 
-    fun updateColor(alpha: Int, red: Int, green: Int, blue: Int, isLight: Boolean) {
-        if (emaR < 0f) {
-            emaR = red.toFloat()
-            emaG = green.toFloat()
-            emaB = blue.toFloat()
+    fun onSample(red: Int, green: Int, blue: Int) {
+        val current = _state.value
+        if (current.locked) return
+
+        val sample = ColorScience.rgbToLab(red, green, blue)
+        val prev = ema
+        val next = if (prev == null) {
+            sample
         } else {
-            emaR += (red - emaR) * smooth
-            emaG += (green - emaG) * smooth
-            emaB += (blue - emaB) * smooth
+            ColorScience.Lab(
+                prev.l + (sample.l - prev.l) * smooth,
+                prev.a + (sample.a - prev.a) * smooth,
+                prev.b + (sample.b - prev.b) * smooth
+            )
         }
-        val r = emaR.toInt().coerceIn(0, 255)
-        val g = emaG.toInt().coerceIn(0, 255)
-        val b = emaB.toInt().coerceIn(0, 255)
-        _state.value = ColorState(r, g, b, alpha, isLight)
+        ema = next
+
+        val last = published
+        if (last != null && ColorScience.deltaE(last, next) < holdDeltaE) return
+
+        published = next
+        val rgb = ColorScience.labToRgb(next)
+        _state.value = current.copy(
+            red = rgb[0],
+            green = rgb[1],
+            blue = rgb[2],
+            alpha = 255,
+            isLight = next.l >= 55f
+        )
+    }
+
+    fun toggleLock() {
+        _state.value = _state.value.copy(locked = !_state.value.locked)
     }
 }
 
@@ -38,7 +58,8 @@ data class ColorState(
     val blue: Int,
     val alpha: Int,
     val isLight: Boolean,
-    val colorEnvelope: ColorEnvelope? = null
+    val colorEnvelope: ColorEnvelope? = null,
+    val locked: Boolean = false
 )
 
 fun ColorState.toColor(): Color = Color(red, green, blue)

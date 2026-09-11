@@ -8,6 +8,7 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
@@ -68,7 +69,11 @@ fun MainContent(modifier: Modifier, mainViewModel: MainViewModel = viewModel()) 
         Box(modifier = modifier) {
             val currentColorState = mainViewModel.colorState.collectAsState().value
             CameraPreview(modifier = Modifier.fillMaxSize(), viewModel = mainViewModel)
-            Box(modifier = Modifier.align(Alignment.Center)) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .clickable { mainViewModel.toggleLock() }
+            ) {
                 Ring(color = if (currentColorState.isLight) Color.Black else Color.White)
             }
 
@@ -80,7 +85,8 @@ fun MainContent(modifier: Modifier, mainViewModel: MainViewModel = viewModel()) 
                 colorState = currentColorState,
                 onUriResult = {
                     OpenImageActivity.startActivity(context, it)
-                }
+                },
+                onToggleLock = { mainViewModel.toggleLock() }
             )
         }
     }
