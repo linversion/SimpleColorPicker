@@ -40,7 +40,6 @@ android {
         }
 
         release {
-            versionNameSuffix "-release"
             minifyEnabled true
             zipAlignEnabled true
             signingConfig signingConfigs.release
@@ -58,8 +57,6 @@ android {
         }
         product {
             dimension = "version"
-            applicationIdSuffix = ".product"
-            versionNameSuffix = "-product"
             buildConfigField "String", "cameraBannerAdId", "\"ca-app-pub-5013976831722488/4005418299\""
         }
     }
