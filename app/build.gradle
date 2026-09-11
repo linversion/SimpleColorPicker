@@ -1,22 +1,22 @@
 plugins {
     id 'com.android.application'
-    id 'kotlin-android'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 android {
-    namespace 'com.linversion.simplecolorpicker'
-    compileSdk 36
+    namespace = 'com.linversion.simplecolorpicker'
+    compileSdk = 37
 
     defaultConfig {
-        applicationId "com.linversion.simplecolorpicker"
-        minSdk 23
-        targetSdk 36
-        versionCode 8
-        versionName "1.1.0"
+        applicationId = "com.linversion.simplecolorpicker"
+        minSdk = 23
+        targetSdk = 36
+        versionCode = 8
+        versionName = "1.1.0"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
-            useSupportLibrary true
+            useSupportLibrary = true
         }
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a'
@@ -25,28 +25,27 @@ android {
 
     signingConfigs {
         release {
-            keyAlias 'simple-color-picker'
-            keyPassword '11118888'
-            storeFile file('./keystore/sign.jks')
-            storePassword '11118888'
+            keyAlias = 'simple-color-picker'
+            keyPassword = '11118888'
+            storeFile = file('./keystore/sign.jks')
+            storePassword = '11118888'
         }
     }
 
     buildTypes {
         debug {
-            minifyEnabled false
-            applicationIdSuffix ".debug"
-            versionNameSuffix "-debug"
+            minifyEnabled = false
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
 
         release {
-            minifyEnabled true
-            zipAlignEnabled true
-            signingConfig signingConfigs.release
+            minifyEnabled = true
+            zipAlignEnabled = true
+            signingConfig = signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
     flavorDimensions "version"
     productFlavors {
         dev {
@@ -61,41 +60,40 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = '17'
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
-        compose true
-        buildConfig true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion compose_compiler_version
+        compose = true
+        buildConfig = true
     }
     packaging {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
         jniLibs {
-            useLegacyPackaging false
+            useLegacyPackaging = false
         }
     }
 }
 
 dependencies {
+    implementation platform('androidx.compose:compose-bom:2026.09.00')
+    androidTestImplementation platform('androidx.compose:compose-bom:2026.09.00')
+
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.fragment:fragment-ktx:1.8.5'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.palette:palette-ktx:1.0.0'
-    implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.material:material:$compose_version"
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation "androidx.compose.material:material-icons-core:$compose_version"
-    implementation "androidx.compose.material:material-icons-extended:$compose_version"
-    implementation "androidx.compose.foundation:foundation:$compose_version"
+
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.material:material'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.foundation:foundation'
+    // icons 库已停止随 BOM 演进，固定在最终版本
+    implementation 'androidx.compose.material:material-icons-core:1.7.8'
+    implementation 'androidx.compose.material:material-icons-extended:1.7.8'
 
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.6'
     implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.8.6'
@@ -108,11 +106,11 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:$camerax_version"
     implementation "androidx.camera:camera-view:$camerax_version"
 
-    implementation "com.google.accompanist:accompanist-permissions:0.34.0"
+    implementation 'com.google.accompanist:accompanist-permissions:0.37.3'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
-    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
 }
