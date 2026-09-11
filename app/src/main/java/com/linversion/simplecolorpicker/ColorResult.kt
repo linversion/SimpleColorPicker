@@ -17,20 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.insets.statusBarsPadding
 import com.linversion.simplecolorpicker.settings.SettingsActivity
 
-/**
- * @author linversion
- * on 2022/5/22
- */
 @Composable
 fun ColorResult(
     modifier: Modifier,
     colorState: ColorState,
     onUriResult: (uri: Uri) -> Unit
 ) {
-
     Box(
         modifier = modifier
             .background(if (colorState.colorEnvelope != null) colorState.colorEnvelope.color else colorState.toColor())
@@ -51,12 +45,9 @@ fun ColorResult(
 @Composable
 fun Content(text: String, isLight: Boolean, onUriResult: (uri: Uri) -> Unit) {
     val launcher = rememberLauncherForActivityResult(
-        contract =
-        ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let {
-            onUriResult(uri)
-        }
+        uri?.let { onUriResult(uri) }
     }
     val context = LocalContext.current
     Row(
@@ -69,20 +60,15 @@ fun Content(text: String, isLight: Boolean, onUriResult: (uri: Uri) -> Unit) {
             color = if (isLight) Color.Black else Color.White,
             modifier = Modifier.padding(start = 12.dp)
         )
-
         Row {
-            IconButton(onClick = {
-                launcher.launch("image/*")
-            }) {
+            IconButton(onClick = { launcher.launch("image/*") }) {
                 Icon(
                     imageVector = Icons.Default.Image,
                     contentDescription = "Choose an image",
                     tint = if (isLight) Color.Black else Color.White
                 )
             }
-            IconButton(onClick = {
-                SettingsActivity.startActivity(context)
-            }) {
+            IconButton(onClick = { SettingsActivity.startActivity(context) }) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Open Setting",
