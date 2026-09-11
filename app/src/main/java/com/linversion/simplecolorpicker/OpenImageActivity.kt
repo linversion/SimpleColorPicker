@@ -97,7 +97,10 @@ fun ImagePickScreen(
     val colorState = viewModel.colorState.collectAsState().value
     val palette = viewModel.palette.collectAsState().value
     val context = LocalContext.current
-    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val sheetState = rememberModalBottomSheetState(
+        initialValue = ModalBottomSheetValue.Hidden,
+        skipHalfExpanded = true
+    )
     val scope = rememberCoroutineScope()
 
     ModalBottomSheetLayout(
