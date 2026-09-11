@@ -18,12 +18,15 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,6 +35,7 @@ import com.linversion.simplecolorpicker.BuildConfig
 
 private val ScreenBg = Color(0xFF121212)
 private val CardBg = Color(0xFF1E1E1E)
+private val IconWell = Color(0xFF2A2A2A)
 private val TextPrimary = Color(0xFFF2F2F2)
 private val TextSecondary = Color(0xFF9A9A9A)
 private val Divider = Color(0xFF2C2C2C)
@@ -142,16 +146,21 @@ fun SettingsScreen(onBack: () -> Unit) {
                     .background(CardBg)
             ) {
                 SettingsRow(
+                    icon = Icons.Rounded.Shield,
+                    iconTint = Color(0xFF5AC8A0),
                     title = "隐私政策",
                     subtitle = "查看数据如何使用",
+                    showArrow = true,
                     showDivider = true
                 ) {
                     uriHandler.openUri("https://sites.google.com/view/linversion-privacy-policy")
                 }
                 SettingsRow(
+                    icon = Icons.Rounded.Verified,
+                    iconTint = Color(0xFF5A9BE0),
                     title = "版本",
                     subtitle = BuildConfig.VERSION_NAME,
-                    trailing = null,
+                    showArrow = false,
                     showDivider = false
                 )
             }
@@ -161,40 +170,56 @@ fun SettingsScreen(onBack: () -> Unit) {
 
 @Composable
 private fun SettingsRow(
+    icon: ImageVector,
+    iconTint: Color,
     title: String,
     subtitle: String,
-    trailing: @Composable (() -> Unit)? = {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-            contentDescription = null,
-            tint = TextSecondary,
-            modifier = Modifier.size(18.dp)
-        )
-    },
+    showArrow: Boolean,
     showDivider: Boolean,
     onClick: (() -> Unit)? = null
 ) {
-    val rowMod = Modifier
-        .fillMaxWidth()
-        .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-        .padding(horizontal = 16.dp, vertical = 16.dp)
     Column {
         Row(
-            modifier = rowMod,
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(IconWell),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = title, color = TextPrimary, fontSize = 16.sp)
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(text = subtitle, color = TextSecondary, fontSize = 13.sp)
             }
-            trailing?.invoke()
+            if (showArrow) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
         if (showDivider) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp)
+                    .padding(start = 70.dp)
                     .height(1.dp)
                     .background(Divider)
             )
