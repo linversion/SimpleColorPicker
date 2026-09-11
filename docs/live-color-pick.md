@@ -9,9 +9,9 @@
 ## 管线
 
 ```
-PreviewView (FILL_CENTER)
+CameraXViewfinder (Alignment.Center + ContentScale.Crop，居中裁剪)
         |
-        | CoordinateTransform
+        | 取景为居中裁剪，准星恒等于 buffer 中心，直接取中心
         v
 ImageAnalysis RGBA 640x480 @ ~20Hz
         |
@@ -29,12 +29,14 @@ Lab -> sRGB -> ColorState
 顶栏 / Hex
 ```
 
+预览实现见 `camera-compose-migration.md`。
+
 ## 模块
 
 | 文件 | 职责 |
 | --- | --- |
 | `camera/CameraPreview.kt` | 绑定 Preview + Analysis，对准星做一次 AF/AE/AWB 测光 |
-| `camera/ColorAnalyzer.kt` | 坐标映射、圆形孔径、中值 |
+| `camera/ColorAnalyzer.kt` | 缓冲区中心取样、圆形孔径、中值 |
 | `camera/ColorScience.kt` | sRGB ↔ CIE Lab（D65）、ΔE76 |
 | `MainViewModel.kt` | Lab EMA、死区、锁定 |
 | `MainActivity.kt` / `ColorResult.kt` | 点准星或锁图标冻结颜色 |
@@ -44,8 +46,8 @@ Lab -> sRGB -> ColorState
 **RGBA 而不是手转 YUV**  
 CameraX `OUTPUT_IMAGE_FORMAT_RGBA_8888` 把格式转换交给框架，避开 BT.601/709 系数和 UV stride 踩坑。
 
-**坐标映射**  
-`PreviewView.outputTransform` → `ImageProxyTransformFactory` → `CoordinateTransform`。预览是 `FILL_CENTER`，和 analysis 分辨率、裁切、旋转都可能不同，不能默认 buffer 中心等于准星。映射失败时回退到 buffer 中心。
+**中心即准星**  
+取景是居中裁剪（`ContentScale.Crop`），缩放、旋转、镜像都围绕中心，视图中心在仿射变换下恒等于 analysis buffer 中心，直接取中心即可。PreviewView 时代的 `outputTransform` 映射链已随 camera-compose 迁移删除；若以后支持非中心取样，需用 `MutableCoordinateTransformer` 重建。
 
 **圆形孔径 + 中值**  
 半径 8px（约 17×17 的圆）。中值抗高光、接缝、摩尔纹，比 RGB 均值稳。中值仍在 sRGB 上做，这是算力和鲁棒性的折中；色度平滑放到下一步的 Lab。
