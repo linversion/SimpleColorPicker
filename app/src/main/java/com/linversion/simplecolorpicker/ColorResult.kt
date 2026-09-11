@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,30 +27,27 @@ fun ColorResult(
     modifier: Modifier,
     colorState: ColorState,
     onUriResult: (uri: Uri) -> Unit,
-    onToggleLock: (() -> Unit)? = null
+    onToggleLock: (() -> Unit)? = null,
+    onOpenPalette: (() -> Unit)? = null
 ) {
     Box(
         modifier = modifier
             .background(if (colorState.colorEnvelope != null) colorState.colorEnvelope.color else colorState.toColor())
             .statusBarsPadding()
     ) {
-        if (colorState.colorEnvelope != null) {
-            Content(
-                text = "#${colorState.colorEnvelope.hexCode}",
-                isLight = colorState.isLight,
-                locked = colorState.locked,
-                onUriResult = onUriResult,
-                onToggleLock = onToggleLock
-            )
+        val text = if (colorState.colorEnvelope != null) {
+            "#${colorState.colorEnvelope.hexCode}"
         } else {
-            Content(
-                text = colorState.toHexString(),
-                isLight = colorState.isLight,
-                locked = colorState.locked,
-                onUriResult = onUriResult,
-                onToggleLock = onToggleLock
-            )
+            colorState.toHexString()
         }
+        Content(
+            text = text,
+            isLight = colorState.isLight,
+            locked = colorState.locked,
+            onUriResult = onUriResult,
+            onToggleLock = onToggleLock,
+            onOpenPalette = onOpenPalette
+        )
     }
 }
 
@@ -59,7 +57,8 @@ fun Content(
     isLight: Boolean,
     locked: Boolean,
     onUriResult: (uri: Uri) -> Unit,
-    onToggleLock: (() -> Unit)?
+    onToggleLock: (() -> Unit)?,
+    onOpenPalette: (() -> Unit)? = null
 ) {
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -79,6 +78,15 @@ fun Content(
             modifier = Modifier.padding(start = 12.dp)
         )
         Row {
+            if (onOpenPalette != null) {
+                IconButton(onClick = onOpenPalette) {
+                    Icon(
+                        imageVector = Icons.Default.Palette,
+                        contentDescription = "Image palette",
+                        tint = tint
+                    )
+                }
+            }
             if (onToggleLock != null) {
                 IconButton(onClick = onToggleLock) {
                     Icon(
