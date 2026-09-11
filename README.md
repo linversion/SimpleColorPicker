@@ -2,6 +2,8 @@
 
 相机实时取色 + 图片点选。对准星或点击图片得到 Hex，图片还可以抽一张主色色板。
 
+[Google Play](https://play.google.com/store/apps/details?id=com.linversion.simplecolorpicker)
+
 包名：`com.linversion.simplecolorpicker`  
 `compileSdk` / `targetSdk` 36，`minSdk` 23，当前版本 `1.1.0`（versionCode 8）。
 
