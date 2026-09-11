@@ -22,6 +22,7 @@ import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -133,26 +134,24 @@ fun ImagePreview(
     firstUri: Uri?
 ) {
     val context = LocalContext.current
+    val bitmap = remember(firstUri) { firstUri?.toBitmap(context) }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.DarkGray)
     ) {
-        firstUri?.let { uri ->
-            val bitmap = uri.toBitmap(context)
-            if (bitmap != null) {
-                LaunchedEffect(bitmap) {
-                    viewModel.extractPalette(bitmap)
-                }
-                ImageColorPicker(
-                    modifier = Modifier.fillMaxSize(),
-                    controller = controller,
-                    bitmap = bitmap,
-                    onColorChanged = { colorEnvelope: ColorEnvelope ->
-                        viewModel.updateColor(colorEnvelope)
-                    }
-                )
+        if (bitmap != null) {
+            LaunchedEffect(firstUri) {
+                viewModel.extractPalette(bitmap)
             }
+            ImageColorPicker(
+                modifier = Modifier.fillMaxSize(),
+                controller = controller,
+                bitmap = bitmap,
+                onColorChanged = { colorEnvelope: ColorEnvelope ->
+                    viewModel.updateColor(colorEnvelope)
+                }
+            )
         }
     }
 }
