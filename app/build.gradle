@@ -11,8 +11,9 @@ android {
         applicationId = "com.linversion.simplecolorpicker"
         minSdk = 23
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.1.0"
+        // CI 从 tag 注入 -PversionNameOverride / -PversionCodeOverride；versionCode 必须大于 Play 已发布的最大值
+        versionCode = ((findProperty('versionCodeOverride') ?: '9') as String).toInteger()
+        versionName = (findProperty('versionNameOverride') ?: '1.1.1') as String
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

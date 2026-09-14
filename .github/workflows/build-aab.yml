@@ -28,8 +28,21 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: Derive version from tag
+        run: |
+          if [[ "$GITHUB_REF_NAME" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR=${BASH_REMATCH[1]}
+            MINOR=${BASH_REMATCH[2]}
+            PATCH=${BASH_REMATCH[3]}
+            CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+            echo "VERSION_PROPS=-PversionNameOverride=${MAJOR}.${MINOR}.${PATCH} -PversionCodeOverride=${CODE}" >> "$GITHUB_ENV"
+          else
+            echo "VERSION_PROPS=" >> "$GITHUB_ENV"
+            echo "Tag '$GITHUB_REF_NAME' is not vX.Y.Z, building with versions from app/build.gradle"
+          fi
+
       - name: Build productRelease AAB
-        run: ./gradlew :app:bundleProductRelease --no-daemon --stacktrace
+        run: ./gradlew :app:bundleProductRelease --no-daemon --stacktrace $VERSION_PROPS
 
       - name: Rename AAB
         run: |
